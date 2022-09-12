@@ -10,7 +10,12 @@ app.use(cors())
 
 //配置解析表单数据的中间件,只能解析application/x-www-form-urlencoded表单数据
 app.use(express.urlencoded({ extended: false }))
-// write your code here...
+
+// 导入并注册用户路由模块
+const userRouter = require('./router/user')
+app.use('/api', userRouter)  //都需要增加/api的前缀
+
+
 
 // 调用 app.listen 方法，指定端口号并启动web服务器
 app.listen(3007, function () {

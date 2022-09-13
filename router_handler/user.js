@@ -5,6 +5,11 @@
 const db = require('../db/index')
 //导入加密库
 const bcrypt = require('bcryptjs')
+// 用这个包来生成 Token 字符串
+const jwt = require('jsonwebtoken')
+// 导入配置文件
+const config = require('../config')
+
 // 注册用户的处理函数
 exports.regUser = (req, res) => {
     console.log("regUser中req的值===>",req.body)  //req.body获取到提交的表单数据
@@ -43,7 +48,7 @@ exports.regUser = (req, res) => {
         }
         // 注册成功
         // res.send({ status: 0, message: '注册成功！' })
-        res.cc("吴世博成功注册",1)
+        res.cc("注册成功",0)
     })
 }
 // 登录的处理函数
@@ -59,9 +64,28 @@ exports.login = (req, res) => {
         // TODO：判断用户输入的登录密码是否和数据库中的密码一致
         // 拿着用户输入的密码,和数据库中存储的密码进行对比
         const compareResult = bcrypt.compareSync(userinfo.password, results[0].password) //使用compareSync进行密码核查
+        console.log("compareResult的值为===>",compareResult)  //返回true和false
         // 如果对比的结果等于 false, 则证明用户输入的密码错误
         if (!compareResult) {
-            return res.cc('登录失败！')
+            return res.cc('登录失败！')  //如果compareResult为false的话就报错
         }
+        //TODO:在服务器端生成Token的字符串
+        // 剔除完毕之后，user 中只保留了用户的 id, username, nickname, email 这四个属性的值
+        console.log("results的值===》",results)
+        const user = { ...results[0], password: '', user_pic: '' }  //高级语法，后面的覆盖了前面的值
+        console.log("user的值===》",user)
+        //
+        // 生成 Token 字符串
+        const tokenStr = jwt.sign(user, config.jwtSecretKey, {
+            expiresIn: '10h', // token 有效期为 10 个小时
+        })
+        console.log("token字符串===》",tokenStr)
+        //将token返回给客户端
+        res.send({
+            status: 0,
+            message: '登录成功！',
+            // 为了方便客户端使用 Token，在服务器端直接拼接上 Bearer 的前缀
+            token: 'Bearer ' + tokenStr,
+        })
     })
 }

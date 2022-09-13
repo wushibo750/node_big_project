@@ -5,6 +5,12 @@ const app = express()
 const joi = require('joi')
 // 导入 cors 中间件
 const cors = require('cors')
+
+// 导入配置文件
+const config = require('./config')
+// 解析 token 的中间件
+const expressJWT = require('express-jwt')
+
 // 将 cors 注册为全局中间件
 app.use(cors())
 
@@ -26,9 +32,20 @@ app.use(function (req, res, next) {
     next()
 })
 
+//一定要在导入路由之前
+// 使用 .unless({ path: [/^\/api\//] }) 指定哪些接口不需要进行 Token 的身份认证
+app.use(expressJWT({ secret: config.jwtSecretKey }).unless({ path: [/^\/api\//] }))
+
+//1.第一个模块(登录注册模块)
 // 导入并注册用户路由模块
 const userRouter = require('./router/user')
 app.use('/api', userRouter)  //都需要增加/api的前缀
+
+//2.第二个模块(个人信息模块)
+// 导入并使用用户信息路由模块
+const userinfoRouter = require('./router/userinfo')
+// 注意：以 /my 开头的接口，都是有权限的接口，需要进行 Token 身份认证
+app.use('/my', userinfoRouter)
 
 
 // 定义错误中间件
@@ -36,6 +53,8 @@ app.use(function (err, req, res, next) {
     // 数据验证失败
     if (err instanceof joi.ValidationError)
         return res.cc(err)
+    if (err.name === 'UnauthorizedError')
+        return res.cc('身份认证失败！')   //如果没有token并且没有/api就报错
     // 未知错误
     res.cc(err)
 })

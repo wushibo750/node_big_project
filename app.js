@@ -53,6 +53,12 @@ const artCateRouter = require('./router/artcate')
 // 为文章分类的路由挂载统一的访问前缀 /my/article
 app.use('/my/article', artCateRouter)
 
+//4.第四个模块(文章管理)
+// 导入并使用文章路由模块
+const articleRouter = require('./router/article')
+// 为文章的路由挂载统一的访问前缀 /my/article
+app.use('/my/article', articleRouter)
+
 // 定义错误中间件
 app.use(function (err, req, res, next) {
     // 数据验证失败
@@ -64,6 +70,8 @@ app.use(function (err, req, res, next) {
     res.cc(err)
 })
 
+// 托管静态资源文件
+app.use('/uploads', express.static('./uploads'))
 
 // 调用 app.listen 方法，指定端口号并启动web服务器
 app.listen(3007, function () {

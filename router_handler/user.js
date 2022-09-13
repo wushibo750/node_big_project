@@ -11,9 +11,9 @@ exports.regUser = (req, res) => {
     // 接收表单数据
     const userinfo = req.body
     // 判断数据是否合法
-    if (!userinfo.username || !userinfo.password) {
-        return res.send({ status: 1, message: '用户名或密码不能为空！' })
-    }
+    // if (!userinfo.username || !userinfo.password) {
+    //     return res.send({ status: 1, message: '用户名或密码不能为空！' })
+    // }
     //定义SQL语句
     const sqlStr = `select * from ev_users where username=?`
     //只有一个参数的时候，我们可以去掉[],也可以不去
@@ -42,11 +42,26 @@ exports.regUser = (req, res) => {
             return res.send({ status: 1, message: '注册用户失败，请稍后再试！' })
         }
         // 注册成功
-        res.send({ status: 0, message: '注册成功！' })
+        // res.send({ status: 0, message: '注册成功！' })
+        res.cc("吴世博成功注册",1)
     })
 }
 // 登录的处理函数
 exports.login = (req, res) => {
-    console.log("login中req的值===>",req)
-    res.send('login OK')
+    const userinfo = req.body  //获取提交的表单数据
+    const sql = `select * from ev_users where username=?`
+    db.query(sql, userinfo.username, function (err, results) {
+        // 执行 SQL 语句失败
+        if (err) return res.cc(err)
+        // 执行 SQL 语句成功，但是查询到数据条数不等于 1
+        if (results.length !== 1) return res.cc('登录失败！')
+        console.log("查询出来的results数组===》",results[0].password)  //查出来的就是你数据库里面加密的密码
+        // TODO：判断用户输入的登录密码是否和数据库中的密码一致
+        // 拿着用户输入的密码,和数据库中存储的密码进行对比
+        const compareResult = bcrypt.compareSync(userinfo.password, results[0].password) //使用compareSync进行密码核查
+        // 如果对比的结果等于 false, 则证明用户输入的密码错误
+        if (!compareResult) {
+            return res.cc('登录失败！')
+        }
+    })
 }
